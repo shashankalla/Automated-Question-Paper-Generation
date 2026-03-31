@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Generate Question Paper{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Automated Question Paper Generator</h1>
+    <p class="subtitle">Generate balanced question papers aligned with Bloom's Taxonomy and Course Outcomes</p>
+</div>
+
+<div class="card">
+    <form id="generateForm" action="{{ url_for('generate') }}" method="POST">
+        <!-- Paper Details -->
+        <div class="form-section">
+            <h2 class="section-title">📋 Paper Details</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="paper_title">Paper Title</label>
+                    <input type="text" id="paper_title" name="paper_title"
+                           placeholder="e.g. End Semester Examination"
+                           value="End Semester Examination" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject <span class="required">*</span></label>
+                    <select id="subject" name="subject" class="form-control" required>
+                        <option value="">-- Select Subject --</option>
+                        {% for subj in subjects %}
+                        <option value="{{ subj }}">{{ subj }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Unit Selection -->
+        <div class="form-section">
+            <h2 class="section-title">📚 Unit Selection</h2>
+            <p class="hint">Select the units to include in the question paper.</p>
+            <div class="checkbox-grid">
+                {% for unit in units %}
+                <label class="checkbox-label">
+                    <input type="checkbox" name="units" value="{{ unit }}" checked>
+                    <span class="checkmark"></span>
+                    {{ unit }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Number of Questions -->
+        <div class="form-section">
+            <h2 class="section-title">🔢 Question Configuration</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="num_questions">Total Number of Questions <span class="required">*</span></label>
+                    <input type="number" id="num_questions" name="num_questions"
+                           min="1" max="50" value="10" class="form-control" required>
+                </div>
+            </div>
+
+            <!-- Difficulty Distribution -->
+            <h3 class="subsection-title">Difficulty Distribution</h3>
+            <p class="hint">Set the count for each difficulty level (leave all at 0 for automatic distribution).</p>
+            <div class="form-row three-col">
+                <div class="form-group">
+                    <label for="easy_count" class="difficulty-label easy">🟢 Easy</label>
+                    <input type="number" id="easy_count" name="easy_count"
+                           min="0" max="50" value="3" class="form-control diff-input">
+                </div>
+                <div class="form-group">
+                    <label for="medium_count" class="difficulty-label medium">🟡 Medium</label>
+                    <input type="number" id="medium_count" name="medium_count"
+                           min="0" max="50" value="4" class="form-control diff-input">
+                </div>
+                <div class="form-group">
+                    <label for="hard_count" class="difficulty-label hard">🔴 Hard</label>
+                    <input type="number" id="hard_count" name="hard_count"
+                           min="0" max="50" value="3" class="form-control diff-input">
+                </div>
+            </div>
+            <p class="hint" id="diff-total-hint">
+                Total from difficulty fields: <strong id="diff-total">10</strong>
+                (should match total questions above)
+            </p>
+        </div>
+
+        <!-- CO Selection -->
+        <div class="form-section">
+            <h2 class="section-title">🎯 Course Outcome (CO) Mapping</h2>
+            <p class="hint">Select which Course Outcomes to include (leave blank to include all).</p>
+            <div class="checkbox-grid">
+                {% for co in co_list %}
+                <label class="checkbox-label">
+                    <input type="checkbox" name="co_mapping" value="{{ co }}" checked>
+                    <span class="checkmark"></span>
+                    {{ co }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">
+                ⚡ Generate Question Paper
+            </button>
+            <button type="reset" class="btn btn-secondary">Reset</button>
+        </div>
+    </form>
+</div>
+
+<!-- Quick stats card -->
+<div class="card info-card">
+    <h3>📊 Database Status</h3>
+    <p>Available questions: <strong id="available-count">—</strong></p>
+    <p class="hint">Select a subject and units to see how many questions are available.</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Live difficulty total counter
+    const easyInput = document.getElementById('easy_count');
+    const mediumInput = document.getElementById('medium_count');
+    const hardInput = document.getElementById('hard_count');
+    const totalDisplay = document.getElementById('diff-total');
+
+    function updateDiffTotal() {
+        const total = parseInt(easyInput.value || 0) +
+                      parseInt(mediumInput.value || 0) +
+                      parseInt(hardInput.value || 0);
+        totalDisplay.textContent = total;
+    }
+
+    [easyInput, mediumInput, hardInput].forEach(input => {
+        input.addEventListener('input', updateDiffTotal);
+    });
+
+    // Fetch available question count
+    const subjectSelect = document.getElementById('subject');
+    const unitCheckboxes = document.querySelectorAll('input[name="units"]');
+    const availableCount = document.getElementById('available-count');
+
+    function fetchCount() {
+        const subject = subjectSelect.value;
+        const selectedUnits = Array.from(unitCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+
+        if (!subject || selectedUnits.length === 0) {
+            availableCount.textContent = '—';
+            return;
+        }
+
+        const params = new URLSearchParams();
+        params.append('subject', subject);
+        selectedUnits.forEach(u => params.append('units', u));
+
+        fetch(`/api/questions/count?${params}`)
+            .then(r => r.json())
+            .then(data => {
+                availableCount.textContent = data.count;
+            })
+            .catch(() => { availableCount.textContent = '—'; });
+    }
+
+    subjectSelect.addEventListener('change', fetchCount);
+    unitCheckboxes.forEach(cb => cb.addEventListener('change', fetchCount));
+</script>
+{% endblock %}

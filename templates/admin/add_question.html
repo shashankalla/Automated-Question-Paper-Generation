@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{% if edit_mode %}Edit Question{% else %}Add Question{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if edit_mode %}Edit Question #{{ question_id }}{% else %}Add New Question{% endif %}</h1>
+    <a href="{{ url_for('admin_questions') }}" class="btn btn-secondary">← Back to Questions</a>
+</div>
+
+<div class="card">
+    <form method="POST"
+          action="{% if edit_mode %}{{ url_for('admin_edit_question', question_id=question_id) }}{% else %}{{ url_for('admin_add_question') }}{% endif %}">
+
+        <div class="form-section">
+            <h2 class="section-title">Question Details</h2>
+
+            <div class="form-group full-width">
+                <label for="question_text">Question Text <span class="required">*</span></label>
+                <textarea id="question_text" name="question_text" class="form-control"
+                          rows="4" placeholder="Enter the question text here..." required>{{ form_data.get('question_text', '') }}</textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="subject">Subject <span class="required">*</span></label>
+                    <select id="subject" name="subject" class="form-control" required>
+                        <option value="">-- Select Subject --</option>
+                        {% for subj in subjects %}
+                        <option value="{{ subj }}" {% if form_data.get('subject') == subj %}selected{% endif %}>
+                            {{ subj }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="unit">Unit <span class="required">*</span></label>
+                    <select id="unit" name="unit" class="form-control" required>
+                        <option value="">-- Select Unit --</option>
+                        {% for unit in units %}
+                        <option value="{{ unit }}" {% if form_data.get('unit') == unit %}selected{% endif %}>
+                            {{ unit }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row three-col">
+                <div class="form-group">
+                    <label for="difficulty">Difficulty Level <span class="required">*</span></label>
+                    <select id="difficulty" name="difficulty" class="form-control" required>
+                        <option value="">-- Select --</option>
+                        {% for diff in difficulty_levels %}
+                        <option value="{{ diff }}" {% if form_data.get('difficulty') == diff %}selected{% endif %}>
+                            {{ diff }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="blooms_level">Bloom's Level <span class="required">*</span></label>
+                    <select id="blooms_level" name="blooms_level" class="form-control" required>
+                        <option value="">-- Select --</option>
+                        {% for level in blooms_levels %}
+                        <option value="{{ level }}" {% if form_data.get('blooms_level') == level %}selected{% endif %}>
+                            {{ level }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="co_mapping">CO Mapping <span class="required">*</span></label>
+                    <select id="co_mapping" name="co_mapping" class="form-control" required>
+                        <option value="">-- Select CO --</option>
+                        {% for co in co_list %}
+                        <option value="{{ co }}" {% if form_data.get('co_mapping') == co %}selected{% endif %}>
+                            {{ co }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="marks">Marks <span class="required">*</span></label>
+                    <select id="marks" name="marks" class="form-control" required>
+                        {% for m in marks_options %}
+                        <option value="{{ m }}" {% if form_data.get('marks') | string == m | string %}selected{% endif %}>
+                            {{ m }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% if edit_mode %}💾 Update Question{% else %}➕ Add Question{% endif %}
+            </button>
+            <a href="{{ url_for('admin_questions') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

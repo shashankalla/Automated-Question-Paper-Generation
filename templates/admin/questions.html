@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Manage Questions{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Manage Questions</h1>
+    <a href="{{ url_for('admin_add_question') }}" class="btn btn-primary">+ Add Question</a>
+</div>
+
+<!-- Filters -->
+<div class="card filter-card">
+    <form method="GET" action="{{ url_for('admin_questions') }}" class="filter-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Subject</label>
+                <select name="subject" class="form-control">
+                    <option value="">All Subjects</option>
+                    {% for subj in subjects %}
+                    <option value="{{ subj }}" {% if subj == subject_filter %}selected{% endif %}>{{ subj }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Unit</label>
+                <select name="unit" class="form-control">
+                    <option value="">All Units</option>
+                    {% for unit in units %}
+                    <option value="{{ unit }}" {% if unit == unit_filter %}selected{% endif %}>{{ unit }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Difficulty</label>
+                <select name="difficulty" class="form-control">
+                    <option value="">All Difficulties</option>
+                    {% for diff in difficulty_levels %}
+                    <option value="{{ diff }}" {% if diff == difficulty_filter %}selected{% endif %}>{{ diff }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group form-group-btn">
+                <button type="submit" class="btn btn-secondary">Filter</button>
+                <a href="{{ url_for('admin_questions') }}" class="btn btn-outline">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if questions %}
+<div class="card">
+    <p class="result-count">Showing <strong>{{ questions | length }}</strong> question(s)</p>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Question</th>
+                <th>Subject</th>
+                <th>Unit</th>
+                <th>Difficulty</th>
+                <th>CO</th>
+                <th>Bloom's</th>
+                <th>Marks</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for q in questions %}
+            <tr>
+                <td>{{ q.id }}</td>
+                <td class="question-cell" title="{{ q.question_text }}">
+                    {{ q.question_text[:80] }}{% if q.question_text | length > 80 %}…{% endif %}
+                </td>
+                <td>{{ q.subject }}</td>
+                <td>{{ q.unit }}</td>
+                <td>
+                    <span class="badge badge-{{ q.difficulty | lower }}">{{ q.difficulty }}</span>
+                </td>
+                <td>{{ q.co_mapping }}</td>
+                <td>{{ q.blooms_level }}</td>
+                <td>{{ q.marks }}</td>
+                <td class="action-cell">
+                    <a href="{{ url_for('admin_edit_question', question_id=q.id) }}" class="btn-link">Edit</a>
+                    <form action="{{ url_for('admin_delete_question', question_id=q.id) }}" method="POST"
+                          style="display:inline;"
+                          onsubmit="return confirm('Delete this question?');">
+                        <button type="submit" class="btn-link btn-link-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>No questions match the selected filters.</p>
+    <a href="{{ url_for('admin_questions') }}" class="btn btn-secondary">Clear Filters</a>
+</div>
+{% endif %}
+{% endblock %}

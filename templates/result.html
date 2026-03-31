@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Generated Question Paper{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ paper_title }}</h1>
+    <p class="subtitle">Subject: <strong>{{ subject }}</strong> | Units: {{ units | join(', ') }}</p>
+</div>
+
+<div class="paper-actions">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">← Generate Another</a>
+    <form action="{{ url_for('download_pdf') }}" method="POST" style="display:inline;">
+        <input type="hidden" name="subject" value="{{ subject }}">
+        <input type="hidden" name="paper_title" value="{{ paper_title }}">
+        <input type="hidden" name="question_ids" value="{{ questions | map(attribute='id') | join(',') }}">
+        <button type="submit" class="btn btn-primary">⬇ Download PDF</button>
+    </form>
+    <button onclick="window.print()" class="btn btn-outline">🖨 Print</button>
+</div>
+
+<!-- Paper Preview -->
+<div class="paper-preview" id="paperPreview">
+    <div class="paper-header-block">
+        <h2>{{ paper_title }}</h2>
+        <h3>{{ subject }}</h3>
+        <div class="paper-meta-row">
+            <span>Total Questions: <strong>{{ questions | length }}</strong></span>
+            <span>Total Marks: <strong>{{ total_marks }}</strong></span>
+            <span>Units: <strong>{{ units | join(', ') }}</strong></span>
+        </div>
+        <hr>
+    </div>
+
+    <div class="paper-instructions">
+        <strong>Instructions:</strong>
+        <ul>
+            <li>Answer all questions.</li>
+            <li>Marks for each question are indicated in brackets.</li>
+            <li>Ensure neatness and clarity in your answers.</li>
+        </ul>
+    </div>
+
+    <div class="questions-list">
+        {% for question in questions %}
+        <div class="question-item">
+            <div class="question-number-row">
+                <span class="question-number">Q{{ loop.index }}.</span>
+                <span class="question-marks">[{{ question.marks }} marks]</span>
+            </div>
+            <p class="question-text">{{ question.question_text }}</p>
+            <div class="question-tags">
+                <span class="tag tag-unit">{{ question.unit }}</span>
+                <span class="tag tag-difficulty tag-{{ question.difficulty | lower }}">{{ question.difficulty }}</span>
+                <span class="tag tag-co">{{ question.co_mapping }}</span>
+                <span class="tag tag-blooms">{{ question.blooms_level }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Summary Table -->
+<div class="card">
+    <h3>📊 Paper Summary</h3>
+    <div class="summary-grid">
+        <div class="summary-block">
+            <h4>By Difficulty</h4>
+            <table class="summary-table">
+                <thead><tr><th>Difficulty</th><th>Count</th></tr></thead>
+                <tbody>
+                    {% set easy_count = questions | selectattr('difficulty', 'equalto', 'Easy') | list | length %}
+                    {% set medium_count = questions | selectattr('difficulty', 'equalto', 'Medium') | list | length %}
+                    {% set hard_count = questions | selectattr('difficulty', 'equalto', 'Hard') | list | length %}
+                    <tr><td>🟢 Easy</td><td>{{ easy_count }}</td></tr>
+                    <tr><td>🟡 Medium</td><td>{{ medium_count }}</td></tr>
+                    <tr><td>🔴 Hard</td><td>{{ hard_count }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="summary-block">
+            <h4>By Bloom's Level</h4>
+            <table class="summary-table">
+                <thead><tr><th>Level</th><th>Count</th></tr></thead>
+                <tbody>
+                    {% set blooms_levels = ['Remember','Understand','Apply','Analyze','Evaluate','Create'] %}
+                    {% for level in blooms_levels %}
+                    {% set count = questions | selectattr('blooms_level', 'equalto', level) | list | length %}
+                    {% if count > 0 %}
+                    <tr><td>{{ level }}</td><td>{{ count }}</td></tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="summary-block">
+            <h4>By CO Mapping</h4>
+            <table class="summary-table">
+                <thead><tr><th>CO</th><th>Count</th></tr></thead>
+                <tbody>
+                    {% set co_list = ['CO1','CO2','CO3','CO4','CO5','CO6'] %}
+                    {% for co in co_list %}
+                    {% set count = questions | selectattr('co_mapping', 'equalto', co) | list | length %}
+                    {% if count > 0 %}
+                    <tr><td>{{ co }}</td><td>{{ count }}</td></tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
